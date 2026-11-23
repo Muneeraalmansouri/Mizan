@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mizan prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&family=Tajawal:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: warm, encouraging health companion — friendly but clinically careful
+   IDEA: a phone app you could ship tomorrow; balance (mizan) between food, insulin, movement
+   PICTURE: the live app itself — glucose ring, day curve, insights, quests
+   COLOUR and TYPE: mint #4FAE9E dominant, peach #E9967A support, butter #E2AE3C accent; Nunito + Tajawal for Arabic
+   LAYOUT: single phone-width column with bottom tab bar; centered card on wide screens */
+:root{color-scheme:light dark;
+ --bg:light-dark(#F3FAF8,#0F1A19);--card:light-dark(#FFFFFF,#182725);--soft:light-dark(#E6F5F1,#1E3431);
+ --ink:light-dark(#1E2B2A,#E8F2F0);--mute:light-dark(#5A6B69,#9FB3B0);--line:light-dark(#DCEBE7,#2A403D);
+ --mint:#4FAE9E;--deep:light-dark(#2F7D72,#7FD3C4);--peach:#E9967A;--peachs:light-dark(#FCE3D8,#3A2620);--butter:#E2AE3C;--sky:#7BA7D9;--red:#D9534F}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Nunito,system-ui,sans-serif;overflow-x:clip}
+button,input,select{font:inherit;color:inherit}
+.app{max-width:440px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);position:relative}
+@media(min-width:600px){body{padding:24px 0}.app{min-height:calc(100vh - 48px);border-radius:32px;box-shadow:0 20px 60px #2F7D7230;overflow:hidden;border:1px solid var(--line)}}
+header{display:flex;align-items:center;gap:10px;padding:16px 18px 8px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:900;font-size:22px;color:var(--deep)}
+.logo small{font-family:Tajawal,sans-serif;font-size:18px;color:var(--peach)}
+.lvl{margin-left:auto;text-align:right;font-size:13px;color:var(--mute)}
+.xpbar{width:110px;height:8px;border-radius:9px;background:var(--soft);overflow:hidden;margin-top:3px}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--butter));transition:width .6s}
+main{flex:1;padding:4px 16px 96px}
+.card{background:var(--card);border-radius:22px;padding:16px;margin:12px 0;box-shadow:0 4px 18px #2F7D7214}
+h2{font-size:20px;margin:6px 2px 2px;line-height:1.2}
+h3{font-size:16px;margin:0 0 8px}
+.sub{color:var(--mute);font-size:14px;margin:0 2px}
+.row{display:flex;gap:12px;align-items:center}
+.hero{display:grid;grid-template-columns:132px minmax(0,1fr);gap:14px;align-items:center}
+.big{font-size:40px;font-weight:900;line-height:1}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:var(--soft);font-size:13px;font-weight:700;color:var(--deep)}
+.pill.warn{background:var(--peachs);color:var(--peach)}
+.fig{position:relative;height:170px}.fig svg{position:absolute;inset:0;width:100%;height:100%}
+.checks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.chk{background:var(--soft);border-radius:16px;padding:10px 4px;text-align:center;font-size:12px;font-weight:700;color:var(--mute)}
+.chk b{display:block;font-size:18px;color:var(--ink)}
+.chk.done{background:var(--mint);color:#fff}.chk.done b{color:#fff}
+.grid4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{border:0;border-radius:20px;padding:16px 12px;color:#fff;font-weight:800;text-align:left;cursor:pointer;min-height:96px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 6px 16px #0001}
+.tile svg{width:30px;height:30px}
+.tile:focus-visible,.btn:focus-visible,.tab:focus-visible{outline:3px solid var(--butter);outline-offset:2px}
+.btn{border:0;border-radius:14px;padding:12px 16px;min-height:44px;font-weight:800;background:var(--mint);color:#fff;cursor:pointer}
+.btn.ghost{background:var(--soft);color:var(--deep)}
+.btn.full{width:100%}
+label{font-size:14px;font-weight:700;color:var(--mute);display:block;margin:10px 0 4px}
+input[type=number],select{width:100%;font-size:16px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card)}
+input[type=range]{width:100%;accent-color:var(--mint)}
+.foods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.food{border:2px solid var(--line);background:var(--card);border-radius:14px;padding:10px;text-align:left;cursor:pointer;min-height:44px}
+.food b{display:block;font-size:14px}.food span{font-size:12px;color:var(--mute)}
+.food.on{border-color:var(--mint);background:var(--soft)}
+.barrow{display:grid;grid-template-columns:140px minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:14px;margin:7px 0}
+.bar{height:12px;border-radius:9px;background:var(--soft);overflow:hidden}.bar i{display:block;height:100%;border-radius:9px}
+.num{text-align:right;font-weight:800;white-space:nowrap}
+.ins{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:16px;background:var(--soft);margin:8px 0}
+.ins .dot{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:900}
+.ins p{margin:0;font-size:14px}.ins small{color:var(--mute);font-size:12px}
+.quest{padding:12px 0;border-bottom:1px solid var(--line)}.quest:last-child{border:0}
+.qbar{height:10px;border-radius:9px;background:var(--soft);overflow:hidden;margin-top:6px}.qbar i{display:block;height:100%;border-radius:9px;transition:width .5s}
+.badges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.badge{text-align:center;font-size:12px;font-weight:700;color:var(--mute)}
+.badge .b{width:58px;height:58px;margin:0 auto 6px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--mute);font-size:20px;font-weight:900}
+.badge.on .b{color:#fff;background:var(--butter);box-shadow:0 0 0 4px #E2AE3C33}
+.theme{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.sw{width:40px;height:40px;border-radius:12px;flex:none}
+.switch{margin-left:auto;width:52px;height:30px;border-radius:99px;border:0;background:var(--line);position:relative;cursor:pointer}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .25s}
+.switch[aria-checked=true]{background:var(--mint)}.switch[aria-checked=true]::after{left:25px}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(440px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+@media(min-width:600px){nav{position:absolute;left:0;transform:none;width:100%}}
+.tab{border:0;background:none;padding:8px 2px;border-radius:14px;font-size:12px;font-weight:800;color:var(--mute);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px}
+.tab svg{width:22px;height:22px}.tab[aria-selected=true]{color:var(--deep);background:var(--soft)}
+.sheet{position:fixed;inset:0;background:#0006;display:none;align-items:flex-end;justify-content:center;z-index:20}
+.sheet.open{display:flex}
+.panel{background:var(--card);width:min(440px,100%);border-radius:26px 26px 0 0;padding:20px 18px 28px;max-height:88vh;overflow:auto;animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-120px);background:var(--deep);color:#fff;padding:12px 20px;border-radius:99px;font-weight:800;z-index:30;transition:transform .35s;box-shadow:0 8px 24px #0003;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.conf{position:fixed;width:9px;height:9px;border-radius:2px;z-index:29;pointer-events:none;animation:fall 1.1s ease-in forwards}
+@keyframes fall{to{transform:translateY(55vh) rotate(540deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.note{font-size:12px;color:var(--mute);text-align:center;margin:14px 6px}
+.alert{background:var(--peachs);color:light-dark(#8a3f28,#f4b9a3);border-radius:14px;padding:10px 12px;font-size:14px;margin-top:10px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mute);flex-wrap:wrap}.legend i{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo"><svg width="30" height="30" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3C26 12 32 18 32 25a12 12 0 0 1-24 0c0-7 6-13 12-22z" fill="#4FAE9E"/><path d="M11 24h18M20 17v14M14 24l-2 5h5zM26 24l-2 5h5z" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Mizan <small>ميزان</small></div>
+    <div class="lvl"><span id="lvlTxt">Level 1</span> · <span id="xpTxt">0 XP</span><div class="xpbar"><i id="xpBar"></i></div></div>
+  </header>
+  <main>
+    <section id="v-today">
+      <h2 id="hello">Good evening, Sara</h2>
+      <p class="sub">Demo profile · type 2 diabetes on insulin · 14 days of history</p>
+      <div id="alertBox"></div>
+      <div class="card hero">
+        <div style="position:relative;width:132px;height:132px"><svg id="ring" viewBox="0 0 132 132" width="132" height="132"></svg>
+          <div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center"><div><div style="font-size:28px;font-weight:900" id="tirTxt">–</div><div style="font-size:12px;color:var(--mute)">in range today</div></div></div></div>
+        <div><div class="sub" style="margin:0">Now</div><div class="big" id="nowG">–</div><div class="sub" style="margin:2px 0 8px">mg/dL <span id="trend"></span></div><div class="sub" style="margin:0 0 8px;font-size:12px" id="lastSync"></div>
+          <span class="pill" id="streakPill"></span></div>
+      </div>
+      <div class="card"><div class="row" style="justify-content:space-between"><h3>Today's glucose</h3><span class="legend"><span><i style="background:var(--mint);opacity:.35;height:10px"></i>70–180 target</span></span></div>
+        <div class="fig"><svg id="dayChart"></svg></div></div>
+      <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Connected devices</h3><span class="sub" style="margin:0;font-size:12px">simulated in this demo</span></div><div id="devices"></div></div>
+      <div class="card"><h3>Today's balance</h3><div class="checks" id="checks"></div>
+        <p class="sub" style="margin-top:10px">Points reward what you control — logging, sensor wear and moving. A high reading never costs you points.</p></div>
+      <button class="btn ghost full" id="summaryBtn">View care-team summary</button>
+    </section>
+
+    <section id="v-log" class="hidden">
+      <h2>Log</h2><p class="sub">Only two things need you: meals and insulin. Glucose and activity sync on their own.</p>
+      <div class="grid4" style="margin-top:12px">
+        <button class="tile" style="background:var(--mint)" data-log="meal"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 7c-2-2-7-1.5-7 3.5S8 21 12 19c4 2 7-3.5 7-8.5S14 5 12 7z"/><path d="M12 7c0-2 1-3.5 3-4" stroke="#fff" stroke-width="2" fill="none"/></svg>Meal<br><small>+20 XP</small></button>
+        <button class="tile" style="background:var(--sky)" data-log="insulin"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M17 3l4 4M19 5l-9 9-3-3 9-9M7 11l-4 4 2 2-2 4 4-2 2 2 4-4"/></svg>Insulin<br><small>+15 XP</small></button>
+      </div>
+      <div class="card"><h3>Synced automatically</h3>
+        <div class="ins"><div class="dot" style="background:var(--peach)">G</div><div><p><b>Glucose</b> streams from your CGM (Dexcom G7 or FreeStyle Libre 3) every few minutes.</p><small>Via the CGM maker's cloud connection</small></div></div>
+        <div class="ins"><div class="dot" style="background:var(--butter)">A</div><div><p><b>Activity</b> comes from Apple Watch / Apple Health or Health Connect — walks after meals are detected for you.</p><small>Steps, workouts and active minutes</small></div></div>
+        <div class="ins"><div class="dot" style="background:var(--sky)">P</div><div><p><b>Using a connected insulin pen?</b> Doses can sync too, so you only log meals.</p><small>Optional</small></div></div></div>
+      <div class="card"><h3>Recent logs</h3><div id="recent" class="sub" style="margin:0">Nothing logged yet today — try a meal.</div></div>
+    </section>
+
+    <section id="v-insights" class="hidden">
+      <h2>My insights</h2><p class="sub" id="modelTxt">Personal model</p>
+      <div class="card"><h3>Your foods ranked by 2-hour glucose rise</h3><div id="foodBars"></div><p class="sub" style="margin-top:6px">Typical rise above pre-meal glucose when you do not walk afterwards (AI-adjusted), mg/dL · meals logged in brackets</p></div>
+      <div class="card"><h3>AI insights</h3><div id="insList"></div></div>
+      <div class="card"><h3>What if? Meal simulator</h3>
+        <label for="simFood">Meal</label><select id="simFood"></select>
+        <label for="simWalk">Walk after eating: <span id="simWalkTxt">0</span> min</label><input type="range" id="simWalk" min="0" max="30" step="5" value="0">
+        <div class="fig" style="height:180px;margin-top:8px"><svg id="simChart"></svg></div>
+        <div class="legend"><span><i style="background:var(--peach)"></i>no walk</span><span><i style="background:var(--deep)"></i>with walk</span><span><i style="background:var(--line)"></i>180 limit</span></div>
+        <p id="simTxt" style="font-weight:700;margin:10px 0 0"></p></div>
+    </section>
+
+    <section id="v-quests" class="hidden">
+      <h2>Quests</h2><p class="sub">New AI-picked quests every week.</p>
+      <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">This week</h3><span class="pill warn" id="coinTxt">0 coins</span></div><div id="questList"></div></div>
+      <div class="card"><h3>Badges</h3><div class="badges" id="badgeList"></div></div>
+      <div class="card"><h3>Rewards</h3><p class="sub" style="margin:0 0 6px">Spend coins on app themes inspired by Qatar.</p><div id="themeList"></div></div>
+      <div class="card"><div class="theme" style="border:0;padding:0"><div><h3 style="margin:0">Ramadan mode</h3><p class="sub" style="margin:0">Suhoor & iftar quests, extra hypo safety checks</p></div><button class="switch" id="ramadan" role="switch" aria-checked="false" aria-label="Ramadan mode"></button></div></div>
+      <button class="btn ghost full" id="resetBtn">Reset demo</button>
+    </section>
+    <p class="note">Prototype with simulated data for the AI Innovators Competition 2026. Not medical advice — insulin changes always stay with your care team.</p>
+  </main>
+  <nav role="tablist">
+    <button class="tab" role="tab" data-v="today" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9H3z"/></svg>Today</button>
+    <button class="tab" role="tab" data-v="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Log</button>
+    <button class="tab" role="tab" data-v="insights"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg>Insights</button>
+    <button class="tab" role="tab" data-v="quests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4c0 3 1 4 3 4M17 6h3c0 3-1 4-3 4"/></svg>Quests</button>
+  </nav>
+</div>
+<div class="sheet" id="sheet"><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+{
+const $ = s => document.querySelector(s);
+const FOODS = [
+  {id:"machboos",n:"Chicken machboos",c:75,base:66},{id:"karak",n:"Karak tea (sugar)",c:30,base:44},
+  {id:"dates",n:"Dates ×3",c:54,base:40},{id:"luqaimat",n:"Luqaimat",c:45,base:52},
+  {id:"harees",n:"Harees",c:40,base:30},{id:"balaleet",n:"Balaleet",c:60,base:48},
+  {id:"shawarma",n:"Chicken shawarma wrap",c:50,base:38},{id:"lentil",n:"Lentil soup",c:30,base:18},
+  {id:"oats",n:"Oats + berries",c:40,base:22},{id:"fish",n:"Grilled fish salad",c:15,base:11}];
+const fById = Object.fromEntries(FOODS.map(f=>[f.id,f]));
+const WALK = -2.4, PREB = -0.9;           // true hidden effects (per min) used to simulate history
+const THEMES = [{id:"mint",n:"Mint (default)",c:"#4FAE9E",cost:0},{id:"pearl",n:"Pearl diver",c:"#8FA9C9",cost:120},{id:"sadu",n:"Sadu weave",c:"#C0504D",cost:200},{id:"rose",n:"Desert rose",c:"#D99A7B",cost:160}];
+
+// seeded random
+let seed = 7; const rnd = () => (seed = (seed*16807) % 2147483647) / 2147483647;
+const gauss = () => (rnd()+rnd()+rnd()-1.5)*1.6;
+function history(){
+  seed = 7; const ev=[];
+  const slots=[["balaleet","oats","karak","dates"],["machboos","shawarma","fish","lentil","harees"],["machboos","luqaimat","shawarma","fish","dates","karak"]];
+  for(let d=14; d>=1; d--) slots.forEach(opts=>{
+    const f=opts[Math.floor(rnd()*opts.length)], walk= rnd()<0.4 ? 10+5*Math.floor(rnd()*3) : 0, pre = rnd()<0.3 ? 15 : 0;
+    ev.push({f, walk, pre, rise: Math.max(4, fById[f].base + WALK*walk + PREB*pre + gauss()*6), day:-d});
+  });
+  return ev;
+}
+const fresh = () => ({xp:140, coins:60, streak:12, logs:[], events:history(), quests:{walk:2,meals:3,alert:1,doses:1,sensor:5}, theme:"mint", owned:["mint"], ramadan:false, steps:6240, active:34, live:{t:20.5, pts:[], meals:[], pending:[]}});
+let S; try{ S = JSON.parse(localStorage.getItem("mizan-v2")) || fresh(); }catch(e){ S = fresh(); }
+const save = () => { try{ localStorage.setItem("mizan-v2", JSON.stringify(S)); }catch(e){} };
+
+// ---------- personal model: ridge regression  rise ~ food(one-hot) + walk + prebolus ----------
+let M = null;
+function train(){
+  const k = FOODS.length + 2, X=[], y=[];
+  S.events.forEach(e=>{ const r=new Array(k).fill(0); r[FOODS.findIndex(f=>f.id===e.f)]=1; r[k-2]=e.walk; r[k-1]=e.pre; X.push(r); y.push(e.rise); });
+  const A=[...Array(k)].map(()=>new Array(k+1).fill(0));
+  X.forEach((r,i)=>{ for(let a=0;a<k;a++){ for(let b=0;b<k;b++) A[a][b]+=r[a]*r[b]; A[a][k]+=r[a]*y[i]; } });
+  for(let a=0;a<k;a++) A[a][a]+=0.5;
+  for(let c=0;c<k;c++){ let p=c; for(let r=c+1;r<k;r++) if(Math.abs(A[r][c])>Math.abs(A[p][c])) p=r; [A[c],A[p]]=[A[p],A[c]];
+    for(let r=0;r<k;r++) if(r!==c){ const f=A[r][c]/A[c][c]; for(let j=c;j<=k;j++) A[r][j]-=f*A[c][j]; } }
+  const w=A.map((r,i)=>r[k]/r[i]);
+  const pred=X.map(r=>r.reduce((s,v,i)=>s+v*w[i],0)), my=y.reduce((a,b)=>a+b,0)/y.length;
+  const r2=1-y.reduce((s,v,i)=>s+(v-pred[i])**2,0)/y.reduce((s,v)=>s+(v-my)**2,0);
+  const food={}; FOODS.forEach((f,i)=>{ const ev=S.events.filter(e=>e.f===f.id); food[f.id]={coef:w[i], n:ev.length, mean: ev.length? ev.reduce((s,e)=>s+e.rise,0)/ev.length : null}; });
+  M={food, walk:w[k-2], pre:w[k-1], r2, n:S.events.length};
+}
+const predictRise = (f,walk,pre=0) => Math.max(3, M.food[f].coef + M.walk*walk + M.pre*pre);
+const curve = (rise, base=110) => [...Array(13)].map((_,i)=>{ const t=i*15, p=50; return base + rise*(t/p)*Math.exp(1-t/p); });
+
+// ---------- CGM stream (simulated) ----------
+const shape = (dt, p=50) => dt>0 ? (dt/p)*Math.exp(1-dt/p) : 0;
+const DAYMEALS=[[7.5,52],[13,82],[18,70]];
+function baseG(h){ let g=112+6*Math.sin(h/3); DAYMEALS.forEach(([mh,r])=>g+= r*shape((h-mh)*60)*(mh===18?0.75:1)); return g; }
+function liveG(h){ let g=baseG(h); S.live.meals.forEach(m=>{ g+= m.base*shape((h-m.t0)*60); m.walks.forEach(w=>g+= WALK*w.min*shape((h-w.t)*60,35)); }); return g; }
+function daySeries(){ seed=99; const pts=[]; for(let h=0; h<=20.5; h+=0.25) pts.push([h, baseG(h)+gauss()*3]); return pts.concat(S.live.pts); }
+const clock = h => { const H=Math.floor(h)%24, m=Math.round((h-Math.floor(h))*60); return String(H).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); };
+function lastMeal(){ const L=S.live; return L.meals.filter(m=>L.t-m.t0<=1).slice(-1)[0]; }
+function detectWalk(min){
+  const L=S.live, g=L.pts.length?L.pts[L.pts.length-1][1]:baseG(L.t), m=lastMeal();
+  S.steps+=min*110; S.active+=min;
+  let msg=`Apple Watch: ${min}-min walk detected`;
+  if(m){ m.walks.push({t:L.t, min}); const ev=S.events[m.ev]; ev.walk+=min; ev.rise=Math.max(4, m.base+WALK*ev.walk); train(); if(min>=10) S.quests.walk++; msg+=" after your meal"; }
+  if(g>170) S.quests.alert++;
+  S.logs.push({type:"activity", label:`Walk ${min} min (watch)`, xp:20}); reward(20,10,msg);
+}
+function tick(){
+  const L=S.live; if(L.t>=23.9) return;
+  L.t=Math.round((L.t+5/60)*1000)/1000; L.pts.push([L.t, liveG(L.t)+(Math.random()-.5)*4]);
+  if(L.pts.length>60) L.pts.splice(0, L.pts.length-60);
+  L.pending=L.pending.filter(p=>{ if(L.t>=p.at){ detectWalk(p.min); return false; } return true; });
+  save(); renderToday();
+}
+// ---------- rendering helpers ----------
+function drawLine(svg, series, opts){
+  const W=svg.clientWidth||320, H=svg.clientHeight||170, pad={l:30,r:8,t:8,b:20};
+  const xs=opts.x, ymin=opts.ymin, ymax=opts.ymax;
+  const X=v=>pad.l+(v-xs[0])/(xs[1]-xs[0])*(W-pad.l-pad.r), Y=v=>pad.t+(1-(v-ymin)/(ymax-ymin))*(H-pad.t-pad.b);
+  let h=`<rect x="${pad.l}" y="${Y(opts.band?opts.band[1]:0)}" width="${W-pad.l-pad.r}" height="${opts.band?Y(opts.band[0])-Y(opts.band[1]):0}" fill="#4FAE9E" opacity=".14" rx="6"/>`;
+  opts.yt.forEach(v=>h+=`<text x="${pad.l-6}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="var(--mute)">${v}</text>`);
+  opts.xt.forEach(([v,l])=>h+=`<text x="${X(v)}" y="${H-4}" text-anchor="middle" font-size="10" fill="var(--mute)">${l}</text>`);
+  if(opts.limit) h+=`<line x1="${pad.l}" x2="${W-pad.r}" y1="${Y(opts.limit)}" y2="${Y(opts.limit)}" stroke="var(--line)" stroke-width="2" stroke-dasharray="5 5"/>`;
+  series.forEach(s=>{ h+=`<path d="${s.pts.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)).join("")}" fill="none" stroke="${s.c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+    if(s.end){ const p=s.pts[s.pts.length-1]; h+=`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="5" fill="${s.c}" stroke="#fff" stroke-width="2"/>`; } });
+  svg.innerHTML=h;
+}
+const level = xp => Math.floor(xp/100)+1;
+function toast(msg, party){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1900);
+  if(party) for(let i=0;i<24;i++){ const c=document.createElement("i"); c.className="conf"; c.style.left=(20+Math.random()*60)+"vw"; c.style.top="8vh";
+    c.style.background=["#4FAE9E","#E9967A","#E2AE3C","#7BA7D9"][i%4]; c.style.animationDelay=(Math.random()*.3)+"s"; document.body.appendChild(c); setTimeout(()=>c.remove(),1500); }
+}
+function reward(xp, coins, msg){
+  const before=level(S.xp); S.xp+=xp; S.coins+=coins; save();
+  if(level(S.xp)>before) toast(`Level up! You reached level ${level(S.xp)}`, true); else toast(`+${xp} XP · ${msg}`, xp>=20);
+  render();
+}
+
+// ---------- views ----------
+function renderHeader(){
+  $("#lvlTxt").textContent="Level "+level(S.xp); $("#xpTxt").textContent=S.xp+" XP"; $("#xpBar").style.width=(S.xp%100)+"%";
+  const th=THEMES.find(t=>t.id===S.theme); document.documentElement.style.setProperty("--mint", th.c);
+}
+function renderToday(){
+  const pts=daySeries(), inR=pts.filter(p=>p[1]>=70&&p[1]<=180).length/pts.length, now=pts[pts.length-1][1], prev=pts[pts.length-3][1];
+  $("#tirTxt").textContent=Math.round(inR*100)+"%"; $("#nowG").textContent=Math.round(now);
+  $("#trend").textContent = now-prev>8?"· rising ↗":now-prev<-8?"· falling ↘":"· steady →";
+  $("#streakPill").textContent=`${S.streak}-day logging streak`;
+  $("#lastSync").textContent=`CGM reading at ${clock(pts[pts.length-1][0])} · live`;
+  $("#devices").innerHTML=`
+    <div class="theme"><div class="sw" style="background:var(--peachs);display:grid;place-items:center;color:var(--peach);font-weight:900">G</div><div><b>CGM · Dexcom G7 / Libre 3</b><div class="sub" style="margin:0">Connected · new reading every 5 min</div></div><span class="pill" style="margin-left:auto">Live</span></div>
+    <div class="theme"><div class="sw" style="background:var(--soft);display:grid;place-items:center;color:var(--deep);font-weight:900">W</div><div><b>Apple Watch</b><div class="sub" style="margin:0">${S.steps.toLocaleString()} steps · ${S.active} active min today</div></div><button class="btn ghost" style="margin-left:auto;padding:8px 12px" id="walkBtn">Walk</button></div>
+    <div class="theme" style="border:0"><div class="sw" style="background:var(--soft);display:grid;place-items:center;color:var(--sky);font-weight:900">P</div><div><b>Insulin pen</b><div class="sub" style="margin:0">Not connected · log doses in Log</div></div></div>`;
+  const pend=S.live.pending[0];
+  $("#alertBox").innerHTML = now>180 ? `<div class="alert" style="display:flex;gap:10px;align-items:center;justify-content:space-between"><span><b>High: ${Math.round(now)} mg/dL.</b> A short walk usually brings you down — answer this alert to progress a quest.</span><button class="btn" style="flex:none" id="alertWalk">Walk 10 min</button></div>`
+    : now<70 ? `<div class="alert"><b>Low: ${Math.round(now)} mg/dL.</b> Follow your hypo plan now and re-check in 15 minutes.</div>`
+    : pend ? `<div class="ins" style="margin-top:10px"><div class="dot" style="background:var(--butter)">W</div><div><p>Watching for your ${pend.min}-min walk after the meal…</p><small>Apple Watch will pick it up automatically</small></div></div>` : "";
+  const r=56, C=2*Math.PI*r;
+  $("#ring").innerHTML=`<circle cx="66" cy="66" r="${r}" fill="none" stroke="var(--soft)" stroke-width="14"/><circle cx="66" cy="66" r="${r}" fill="none" stroke="var(--mint)" stroke-width="14" stroke-linecap="round" stroke-dasharray="${C*inR} ${C}" transform="rotate(-90 66 66)"/>`;
+  drawLine($("#dayChart"), [{pts, c:"var(--deep)", end:true}], {x:[0,24], ymin:50, ymax:240, band:[70,180], yt:[70,180], xt:[[0,"12a"],[6,"6a"],[12,"12p"],[18,"6p"],[24,"12a"]]});
+  const cnt=t=>S.logs.filter(l=>l.type===t).length;
+  const items=[["Sensor","98%",true],["Doses",cnt("insulin")+2,cnt("insulin")+2>=3],["Meals",cnt("meal")+2,cnt("meal")+2>=3],["Active min",S.active,S.active>=30]];
+  $("#checks").innerHTML=items.map(([n,v,d])=>`<div class="chk ${d?"done":""}"><b>${v}</b>${n}</div>`).join("");
+}
+function renderLog(){
+  $("#recent").innerHTML = S.logs.length ? S.logs.slice(-6).reverse().map(l=>`<div class="row" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>${l.label}</span><b class="num">+${l.xp} XP</b></div>`).join("") : "Nothing logged yet today — try a meal.";
+}
+function renderInsights(){
+  $("#modelTxt").textContent=`Personal model trained on ${M.n} meals · explains ${Math.round(M.r2*100)}% of your glucose rises`;
+  FOODS.forEach(f=>M.food[f.id].mean=Math.max(3,M.food[f.id].coef));
+  const ranked=FOODS.filter(f=>M.food[f.id].n>=2).sort((a,b)=>M.food[b.id].mean-M.food[a.id].mean), mx=ranked.length?M.food[ranked[0].id].mean:1;
+  $("#foodBars").innerHTML=ranked.map(f=>{ const m=M.food[f.id].mean, col=m>45?"var(--peach)":m>28?"var(--butter)":"var(--mint)";
+    return `<div class="barrow"><span>${f.n} <span style="color:var(--mute)">(${M.food[f.id].n})</span></span><div class="bar"><i style="width:${m/mx*100}%;background:${col}"></i></div><span class="num">+${Math.round(m)}</span></div>`; }).join("");
+  const top=ranked[0], low=ranked[ranked.length-1], w10=Math.round(-M.walk*10), p15=Math.round(-M.pre*15);
+  const walkEv=S.events.filter(e=>e.walk>0).length;
+  const list=[
+    [top?`${top.n} raises you most: about +${Math.round(M.food[top.id].mean)} mg/dL when you don't walk afterwards.`:"Log more meals to unlock food insights.", `Based on ${top?M.food[top.id].n:0} meals`, "var(--peach)","1"],
+    [`Every 10 minutes of walking after a meal lowers your rise by about ${w10} mg/dL.`, `Based on ${walkEv} meals followed by a walk`, "var(--mint)","2"],
+    [low?`${low.n} is your gentlest meal (+${Math.round(M.food[low.id].mean)} mg/dL) — a good swap on busy days.`:"", `Based on ${low?M.food[low.id].n:0} meals`, "var(--sky)","3"],
+    [p15>=5?`Taking rapid insulin 15 min before eating was linked to a ${p15} mg/dL smaller rise. Discuss timing with your care team.`:"", "Association only — not a dosing instruction", "var(--butter)","4"]];
+  $("#insList").innerHTML=list.filter(x=>x[0]).map(([t,s,c,n])=>`<div class="ins"><div class="dot" style="background:${c}">${n}</div><div><p>${t}</p><small>${s}</small></div></div>`).join("");
+  const sel=$("#simFood"); if(!sel.options.length) sel.innerHTML=FOODS.map(f=>`<option value="${f.id}">${f.n}</option>`).join("");
+  drawSim();
+}
+function drawSim(){
+  const f=$("#simFood").value||"machboos", w=+$("#simWalk").value; $("#simWalkTxt").textContent=w;
+  const a=curve(predictRise(f,0)), b=curve(predictRise(f,w)), xs=a.map((_,i)=>i*15);
+  const ser=[{pts:xs.map((x,i)=>[x,a[i]]), c:"var(--peach)"}]; if(w) ser.push({pts:xs.map((x,i)=>[x,b[i]]), c:"var(--deep)"});
+  drawLine($("#simChart"), ser, {x:[0,180], ymin:80, ymax:240, limit:180, yt:[100,140,180,220], xt:[[0,"0"],[60,"60"],[120,"120"],[180,"180"]]});
+  const pa=Math.round(Math.max(...a)), pb=Math.round(Math.max(...b));
+  $("#simTxt").textContent = w ? `Predicted peak ${pb} mg/dL instead of ${pa} — ${pa-pb} mg/dL lower with a ${w}-min walk.` : `Predicted peak ${pa} mg/dL. Try adding a walk.`;
+}
+function renderQuests(){
+  const q=S.quests, R=S.ramadan;
+  const Q = R ? [["Walk 15 min after iftar ×4","walk",4,"var(--mint)"],["Log your iftar meal ×5","meals",5,"var(--butter)"],["Log every dose on fasting days ×3","doses",3,"var(--sky)"],["Wear your sensor through every fast ×7","sensor",7,"var(--peach)"]]
+              : [["Walk 10+ min after a meal ×4","walk",4,"var(--mint)"],["Photo-log 5 meals","meals",5,"var(--butter)"],["Answer a high alert with a walk ×3","alert",3,"var(--peach)"],["Log every insulin dose today ×3","doses",3,"var(--sky)"],["Wear your sensor all day ×7","sensor",7,"var(--deep)"]];
+  $("#questList").innerHTML=Q.map(([t,k,goal,c])=>{ const v=Math.min(goal,q[k]); return `<div class="quest"><div class="row" style="justify-content:space-between"><b style="font-size:14px">${t}</b><span class="num" style="font-size:13px">${v}/${goal}${v>=goal?" ✓":""}</span></div><div class="qbar"><i style="width:${v/goal*100}%;background:${c}"></i></div></div>`; }).join("");
+  $("#coinTxt").textContent=S.coins+" coins";
+  const B=[["First log","1",S.logs.length>0],["7-day streak","7",S.streak>=7],["Walk master","W",q.walk>=4],["Insight seeker","i",S.seenIns],["Level 5","5",level(S.xp)>=5],["Ramadan ready","R",S.ramadan]];
+  $("#badgeList").innerHTML=B.map(([n,s,on])=>`<div class="badge ${on?"on":""}"><div class="b">${s}</div>${n}</div>`).join("");
+  $("#themeList").innerHTML=THEMES.map(t=>{ const own=S.owned.includes(t.id), act=S.theme===t.id;
+    return `<div class="theme"><div class="sw" style="background:${t.c}"></div><div><b>${t.n}</b><div class="sub" style="margin:0">${own?(act?"In use":"Owned"):t.cost+" coins"}</div></div><button class="btn ${act?"ghost":""}" style="margin-left:auto" data-theme-id="${t.id}">${act?"Active":own?"Use":"Unlock"}</button></div>`; }).join("");
+  $("#ramadan").setAttribute("aria-checked", R);
+}
+function render(){ renderHeader(); renderToday(); renderLog(); renderQuests(); if(!$("#v-insights").classList.contains("hidden")) renderInsights(); }
+
+// ---------- log sheets ----------
+let pick=null;
+function openSheet(type){
+  const P=$("#panel"); pick=null;
+  const head=t=>`<div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">${t}</h2><button class="btn ghost" data-close>Close</button></div>`;
+  if(type==="insulin") P.innerHTML=head("Log insulin")+`<label for="it">Type</label><select id="it"><option>Rapid-acting (meal)</option><option>Long-acting (basal)</option></select><label for="iu">Units taken (as prescribed)</label><input id="iu" type="number" value="6" min="0" max="100"><label for="ipre">Taken before the meal by</label><select id="ipre"><option value="0">With the meal</option><option value="15">15 min before</option></select><p class="sub" style="margin-top:8px">Mizan records doses; it never suggests a dose. With a connected pen this step is automatic.</p><button class="btn full" style="margin-top:10px" id="save">Save dose</button>`;
+  if(type==="meal") P.innerHTML=head("Log a meal")+`<label for="photo">Meal photo (optional)</label><input id="photo" type="file" accept="image/*"><p class="sub" style="margin:6px 0 4px">In the full app, image recognition suggests the dish. In this demo, choose it:</p><div class="foods">${FOODS.map(f=>`<button class="food" data-food="${f.id}"><b>${f.n}</b><span>~${f.c} g carbs</span></button>`).join("")}</div><div id="mealPred"></div><label for="mw">Plan a walk afterwards: <span id="mwTxt">0</span> min</label><input id="mw" type="range" min="0" max="30" step="5" value="0"><p class="sub" style="margin:4px 0 0;font-size:13px">No need to log it — your watch detects the walk (simulated ~20 min after the meal).</p><button class="btn full" style="margin-top:14px" id="save">Save meal</button>`;
+  $("#sheet").classList.add("open"); P.dataset.type=type; P.querySelector("input,select,button")?.focus();
+}
+function mealPred(){
+  if(!pick) return; const w=+$("#mw").value; $("#mwTxt").textContent=w;
+  const r0=Math.round(predictRise(pick,0)), r1=Math.round(predictRise(pick,w));
+  $("#mealPred").innerHTML=`<div class="ins" style="margin-top:10px"><div class="dot" style="background:var(--mint)">AI</div><div><p>Predicted rise for you: <b>+${r0} mg/dL</b>${w?` → <b>+${r1}</b> with a ${w}-min walk`:""}.</p><small>From ${M.food[pick].n} of your past meals</small></div></div>`;
+}
+function saveSheet(){
+  const type=$("#panel").dataset.type; const LOG=(label,xp)=>S.logs.push({type,label,xp});
+  if(type==="insulin"){ const u=+$("#iu").value; LOG(`${$("#it").value.split(" ")[0]} insulin ${u} u`,15); S.quests.doses++; S.lastPre=+$("#ipre").value; closeSheet(); reward(15,5,"dose logged"); return; }
+  if(type==="meal"){ if(!pick){ toast("Choose a dish first"); return; } const w=+$("#mw").value, f=fById[pick], L=S.live;
+    const base=Math.max(6, f.base + PREB*(S.lastPre||0) + (Math.random()-.5)*10);
+    S.events.push({f:pick, walk:0, pre:S.lastPre||0, rise:base, day:0}); L.meals.push({t0:L.t, base, walks:[], ev:S.events.length-1});
+    if(w) L.pending.push({at:L.t+20/60, min:w}); S.lastPre=0; S.quests.meals++;
+    train(); LOG(`${f.n}`,20); closeSheet(); reward(20,10,"meal logged — watch your live curve"); return; }
+}
+function closeSheet(){ $("#sheet").classList.remove("open"); }
+function summary(){
+  FOODS.forEach(f=>M.food[f.id].mean=Math.max(3,M.food[f.id].coef));
+  const pts=daySeries(), tir=Math.round(pts.filter(p=>p[1]>=70&&p[1]<=180).length/pts.length*100), avg=Math.round(pts.reduce((s,p)=>s+p[1],0)/pts.length);
+  const ranked=FOODS.filter(f=>M.food[f.id].n>=3).sort((a,b)=>M.food[b.id].mean-M.food[a.id].mean).slice(0,3);
+  $("#panel").innerHTML=`<div class="row" style="justify-content:space-between"><h2 style="margin:0">Care-team summary</h2><button class="btn ghost" data-close>Close</button></div>
+  <p class="sub">Sara · last 14 days · generated by Mizan</p>
+  <div class="checks" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:12px 0"><div class="chk done"><b>${tir}%</b>time in range</div><div class="chk"><b>${avg}</b>mean mg/dL</div><div class="chk"><b>${M.n}</b>meals analysed</div></div>
+  <h3>Largest meal-related rises</h3>${ranked.map(f=>`<div class="barrow"><span>${f.n}</span><div class="bar"><i style="width:${M.food[f.id].mean/80*100}%;background:var(--peach)"></i></div><span class="num">+${Math.round(M.food[f.id].mean)}</span></div>`).join("")}
+  <h3 style="margin-top:12px">Behaviour</h3><p class="sub" style="margin:0">Post-meal walks: −${Math.round(-M.walk*10)} mg/dL per 10 min · logging streak ${S.streak} days · no lows recorded today · sensor wear 98%</p>
+  <p class="note">In the full app this one-page summary is shared with the clinician's dashboard, with the patient's consent.</p>`;
+  $("#sheet").classList.add("open"); $("#panel").dataset.type="summary";
+}
+
+// ---------- events ----------
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected", x===b));
+  ["today","log","insights","quests"].forEach(v=>$("#v-"+v).classList.toggle("hidden", v!==b.dataset.v));
+  if(b.dataset.v==="insights"){ renderInsights(); if(!S.seenIns){ S.seenIns=true; save(); renderQuests(); } }
+  if(b.dataset.v==="today") renderToday();
+  window.scrollTo(0,0);
+}));
+document.querySelectorAll("[data-log]").forEach(b=>b.addEventListener("click",()=>openSheet(b.dataset.log)));
+$("#sheet").addEventListener("click",e=>{
+  if(e.target.id==="sheet"||e.target.closest("[data-close]")) return closeSheet();
+  const f=e.target.closest("[data-food]"); if(f){ document.querySelectorAll(".food").forEach(x=>x.classList.toggle("on",x===f)); pick=f.dataset.food; mealPred(); }
+  if(e.target.id==="save") saveSheet();
+});
+$("#sheet").addEventListener("input",e=>{ if(e.target.id==="mw") mealPred();
+ });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
+$("#simFood").addEventListener("change",drawSim); $("#simWalk").addEventListener("input",drawSim);
+$("#summaryBtn").addEventListener("click",summary);
+$("#v-today").addEventListener("click",e=>{ if(e.target.id==="walkBtn"||e.target.id==="alertWalk") detectWalk(10); });
+setInterval(tick, 3000);
+$("#themeList").addEventListener("click",e=>{ const b=e.target.closest("[data-theme-id]"); if(!b) return; const t=THEMES.find(x=>x.id===b.dataset.themeId);
+  if(!S.owned.includes(t.id)){ if(S.coins<t.cost){ toast(`Need ${t.cost-S.coins} more coins`); return; } S.coins-=t.cost; S.owned.push(t.id); toast(`Unlocked ${t.n}!`, true); }
+  S.theme=t.id; save(); render(); });
+$("#ramadan").addEventListener("click",()=>{ S.ramadan=!S.ramadan; save(); renderQuests(); toast(S.ramadan?"Ramadan mode on — Ramadan Kareem":"Ramadan mode off"); });
+$("#resetBtn").addEventListener("click",()=>{ S=fresh(); save(); train(); render(); toast("Demo reset"); });
+const h=new Date().getHours(); $("#hello").textContent=(h<12?"Good morning":h<17?"Good afternoon":"Good evening")+", Sara";
+train(); render();
+const ro=new ResizeObserver(()=>{ renderToday(); if(!$("#v-insights").classList.contains("hidden")) drawSim(); }); ro.observe(document.querySelector(".app"));
+}
+</script>
+</body>
+</html>
